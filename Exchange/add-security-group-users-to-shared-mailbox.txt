@@ -1,0 +1,31 @@
+###########################
+#      Pedro Andrade      #
+###########################
+
+
+# Connect to Azure AD
+Connect-AzureAD
+
+# Get members of Azure AD group and export to CSV
+$groupId = "TO CHANGE"
+$groupMembers = Get-AzureADGroupMember -ObjectId $groupId -All $true | Select-Object UserPrincipalName
+$groupMembers | Export-Csv -Path "C:\temp\name.csv" -NoTypeInformation
+
+# Connect to Exchange Online PowerShell
+Connect-ExchangeOnline 
+
+# Add users to the shared mailbox with FullAccess rights and Send As permission
+$mailboxName = "Cbm-ccb"
+$userList = Import-Csv "C:\temp\name.csv"
+
+foreach ($user in $userList) {
+    $userName = $user.UserPrincipalName
+    
+    # Add FullAccess permission to the shared mailbox
+    Add-MailboxPermission -Identity $mailboxName -User $userName -AccessRights FullAccess -Confirm:$false
+    
+    # Add Send As permission to the shared mailbox
+    Add-RecipientPermission -Identity $mailboxName -Trustee $userName -AccessRights SendAs -Confirm:$false
+}
+
+Write-Host "Permissions added successfully."
