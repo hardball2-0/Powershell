@@ -1,0 +1,9 @@
+Connect-MsolService -Credential (Get-Credential);
+ 
+$NewOwner = "myuser@contoso.com";
+$SharePointAdministrationURL = "https://contoso.sharepoint.com"
+$OneDriveURL = "https://contoso.sharepoint.com/personal/myuser_contoso_com";
+ 
+Connect-SPOService -Url "$SharePointAdministrationURL";
+$Site = Get-SPOSite -Identity "$OneDriveURL"
+Set-SPOUser -Site $Site.Url -LoginName "$NewOwner" -IsSiteCollectionAdmin $true
