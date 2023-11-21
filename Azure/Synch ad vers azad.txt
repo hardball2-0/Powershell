@@ -1,0 +1,24 @@
+#####################################################
+#   forcer synchro créé full cloud vers ad on prem  #
+#                                                   #
+#          1- stop adconnect synch                  #
+#          2- Create user in ad on prem             #
+#          3- run this script                       #
+#####################################################
+
+$user = "synchroad"
+
+$guid = [guid]((Get-ADUser -Identity "$user").objectGuid)
+
+$immutableId = [System.Convert]::ToBase64String($guid.ToByteArray())
+
+Connect-AzureAD
+
+$Oid = (Get-AzureADUser -ObjectId synchroad@lab.homeinfra.ovh | Select-Object -ExpandProperty ObjectID)
+
+Set-AzureADUser -UserPrincipalName synchroad@lab.homeinfra.ovh -ObjectId $Oid -ImmutableId $immutableID
+
+
+
+
+
