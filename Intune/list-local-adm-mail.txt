@@ -1,0 +1,53 @@
+$adminGroupName = if ([System.Globalization.CultureInfo]::CurrentCulture.Name -eq 'fr-FR') {
+    'Administrateurs'
+} else {
+    'Administrators'
+}
+
+try {
+    # Get the currently logged-in user
+    $loggedInUser = whoami
+
+    # Get members of the local administrator group using net localgroup
+    $AdminMembers = net localgroup $adminGroupName | Where-Object { $_ -and $_ -notmatch 'Comment' }
+
+    # Display the title with the connected user
+    Write-Host "Connected User: $loggedInUser"
+    
+    # Display the list of admin members in a table
+    if ($AdminMembers.Count -gt 0) {
+        $AdminMembers | Format-Table -AutoSize
+
+        # Convert the result to a string
+        $ResultString = "Connected User: $loggedInUser`nAdmin Members:`n$($AdminMembers | Out-String)"
+
+        # Email configuration
+        $SenderEmail = " user@domaine.com"
+        $RecipientEmail = "email@gmail.com"
+        $SmtpServer = "smtp.office365.com"
+        $SmtpPort = 587
+        $UseSsl = $true
+        $SmtpUsername = "user@domaine.com"
+        $SmtpPassword = ConvertTo-SecureString "Thepassword" -AsPlainText -Force
+
+        # Send an email with the document attached
+        $EmailParams = @{
+            From       = $SenderEmail
+            To         = $RecipientEmail
+            Subject    = "Admin Detection Report"
+            Body       = $ResultString
+            SmtpServer = $SmtpServer
+            Port       = $SmtpPort
+            UseSsl     = $UseSsl
+            Credential = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList $SmtpUsername, $SmtpPassword
+        }
+
+        Send-MailMessage @EmailParams
+
+    } else {
+        Write-Host "No admin members found in ${adminGroupName}"
+    }
+} catch {
+    # Handle errors and provide details
+    Write-Host "Detection script failed. Error: $($_.Exception.Message)"
+}
