@@ -1,0 +1,54 @@
+# Assurez-vous d'installer et d'importer le module AzureAD avant d'exécuter ce script
+# Vous pouvez l'installer en exécutant Install-Module -Name AzureAD dans PowerShell
+Connect-ExchangeOnline
+
+# Fonction pour nettoyer le nom de feuille Excel
+function CleanSheetName {
+    param(
+        [string]$name
+    )
+    $invalidChars = '[\\\/\?\*\[\]]'
+    $cleanedName = $name -replace $invalidChars, ' '
+    $cleanedName = $cleanedName.Substring(0, [System.Math]::Min($cleanedName.Length, 31))
+    return $cleanedName
+}
+
+# Récupérez la liste des groupes de distribution
+$groupList = Get-DistributionGroup -ResultSize Unlimited
+
+# Créez un objet Excel
+$excel = New-Object -ComObject Excel.Application
+$excel.Visible = $false
+$workbook = $excel.Workbooks.Add()
+
+$sheetName = CleanSheetName -name "Distributionlist"
+    $sheet = $workbook.Worksheets.Add()
+    $sheet.Name = $sheetName
+    $row = 1
+   $sheet.Cells.Item($row, 1) = "DistibutionList"
+    $sheet.Cells.Item($row, 2) = "DisplayName"
+    $sheet.Cells.Item($row, 3) = "PrimarySmtpAddress"
+
+foreach ($group in $groupList) {
+    # Créez une feuille de calcul pour chaque groupe
+    # Obtenez les membres du groupe
+    write-host $group.identity -ForegroundColor Green
+    $members = Get-DistributionGroupMember -Identity $group.Identity
+
+    # Écrivez les membres dans la feuille de calcul
+
+    
+    foreach ($member in $members) {
+    $row++
+    $member.Name
+        # Si le membre est un utilisateur, utilisez son nom convivial, sinon utilisez son adresse e-mail
+          $sheet.Cells.Item($row, 1) = $group.Identity
+          $sheet.Cells.Item($row, 2) = $member.Name
+          $sheet.Cells.Item($row, 3) = $member.PrimarySmtpAddress
+    }
+}
+
+# Enregistrez le fichier Excel
+$workbook.SaveAs("C:\temp\exportedGroups.xlsx")
+$workbook.Close()
+$excel.Quit()
